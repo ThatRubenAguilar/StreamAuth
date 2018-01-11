@@ -29,7 +29,7 @@ populate_cache(playkey_cache, 'play_key.txt')
 
 @app.route('/server_status', methods=['GET'])
 def hello_world():
-    return app.make_response('up', status.HTTP_200_OK)
+    return app.make_response(('up', status.HTTP_200_OK))
 
 
 @app.route('/on_publish', methods=['POST'])
@@ -44,14 +44,14 @@ def play_start():
 
 def check_auth(key_cache, key_arg_name):
     if request.form.get('name') is None or request.form.get('swfurl') is None or request.args.get(key_arg_name) is None:
-        return app.make_response('Malformed request', status.HTTP_400_BAD_REQUEST)
+        return app.make_response(('Malformed request', status.HTTP_400_BAD_REQUEST))
 
     stream_key = request.args.get(key_arg_name)
 
     if not key_cache.has(stream_key):
-        return app.make_response('Incorrect {}'.format(key_arg_name), status.HTTP_401_UNAUTHORIZED)
+        return app.make_response(('Incorrect {}'.format(key_arg_name), status.HTTP_401_UNAUTHORIZED))
 
-    return app.make_response('OK', status.HTTP_200_OK)
+    return app.make_response(('OK', status.HTTP_200_OK))
 
 
 @app.errorhandler(Exception)
