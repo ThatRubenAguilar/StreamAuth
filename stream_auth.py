@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask.ext.api import status
+from flask_api import status
 from werkzeug.contrib.cache import SimpleCache
 import os.path
 import urllib.parse as urlparse
@@ -47,17 +47,27 @@ def check_auth(key_cache, key_arg_name):
     if request.form.get('name') is None or request.form.get('swfurl') is None:
         return app.make_response(('Malformed request', status.HTTP_400_BAD_REQUEST))
 
-    stream_url = urlparse.urlparse(request.form.get('swfurl'))
-    stream_url_qs = urlparse.parse_qs(stream_url.query)
-    if key_arg_name not in stream_url_qs:
-        return app.make_response(('Missing {}'.format(key_arg_name), status.HTTP_400_BAD_REQUEST))
+    stream_key = extract_stream_key(key_arg_name)
 
-    stream_key = stream_url_qs[key_arg_name][0]
+    if stream_key is None:
+        return app.make_response(('Missing {}'.format(key_arg_name), status.HTTP_400_BAD_REQUEST))
 
     if not key_cache.has(stream_key):
         return app.make_response(('Incorrect {}'.format(key_arg_name), status.HTTP_401_UNAUTHORIZED))
 
     return app.make_response(('OK', status.HTTP_200_OK))
+
+
+def extract_stream_key(key_arg_name):
+    stream_url = urlparse.urlparse(request.form.get('swfurl'))
+    stream_url_qs = urlparse.parse_qs(stream_url.query)
+    if key_arg_name in stream_url_qs:
+        return stream_url_qs[key_arg_name][0]
+
+    if request.form.get(key_arg_name) is not None:
+        return request.form.get(key_arg_name)
+
+    return None
 
 
 @app.errorhandler(Exception)
