@@ -72,13 +72,13 @@ def extract_stream_key(key_arg_name):
 
 @app.errorhandler(Exception)
 def handle_invalid_usage(error):
-    rv = dict()
-    rv['message'] = error.message
-    response = jsonify(rv)
-    response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    return response
-    # return 'Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR
+    # rv = dict()
+    # rv['message'] = error.message
+    # response = jsonify(rv)
+    # response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    # return response
+    return app.make_response(('Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR))
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='127.0.0.1', port=5001)
