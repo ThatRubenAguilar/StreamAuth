@@ -7,6 +7,7 @@ app = Flask(__name__)
 
 publishkey_cache = SimpleCache()
 playkey_cache = SimpleCache()
+live_key = None
 
 
 def populate_cache(cache, full_file_path):
@@ -28,29 +29,29 @@ populate_cache(playkey_cache, 'play_key.txt')
 
 @app.route('/server_status', methods=['GET'])
 def hello_world():
-    return 'up'
+    return app.make_response('up', status.HTTP_200_OK)
 
 
 @app.route('/on_publish', methods=['POST'])
 def publish_start():
-    return check_auth(publishkey_cache)
+    return check_auth(publishkey_cache, 'publish_key')
 
 
 @app.route('/on_play', methods=['POST'])
 def play_start():
-    return check_auth(playkey_cache)
+    return check_auth(playkey_cache, 'play_key')
 
 
-def check_auth(key_cache):
-    if request.args.get('name') is None:
-        return 'Malformed request', status.HTTP_400_BAD_REQUEST
+def check_auth(key_cache, key_arg_name):
+    if request.form.get('name') is None or request.form.get('swfurl') is None or request.args.get(key_arg_name) is None:
+        return app.make_response('Malformed request', status.HTTP_400_BAD_REQUEST)
 
-    stream_key = request.args.get('name')
+    stream_key = request.args.get(key_arg_name)
 
     if not key_cache.has(stream_key):
-        return 'Incorrect credentials', status.HTTP_401_UNAUTHORIZED
+        return app.make_response('Incorrect {}'.format(key_arg_name), status.HTTP_401_UNAUTHORIZED)
 
-    return 'OK', status.HTTP_200_OK
+    return app.make_response('OK', status.HTTP_200_OK)
 
 
 @app.errorhandler(Exception)
