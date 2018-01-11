@@ -2,8 +2,9 @@ from flask import Flask, request, jsonify
 from flask.ext.api import status
 from werkzeug.contrib.cache import SimpleCache
 import os.path
-app = Flask(__name__)
+import urllib.parse as urlparse
 
+app = Flask(__name__)
 
 publishkey_cache = SimpleCache()
 playkey_cache = SimpleCache()
@@ -43,10 +44,15 @@ def play_start():
 
 
 def check_auth(key_cache, key_arg_name):
-    if request.form.get('name') is None or request.form.get('swfurl') is None or request.args.get(key_arg_name) is None:
+    if request.form.get('name') is None or request.form.get('swfurl') is None:
         return app.make_response(('Malformed request', status.HTTP_400_BAD_REQUEST))
 
-    stream_key = request.args.get(key_arg_name)
+    stream_url = urlparse.urlparse(request.form.get('swfurl'))
+    stream_url_qs = urlparse.parse_qs(stream_url.query)
+    if key_arg_name not in stream_url_qs:
+        return app.make_response(('Missing {}'.format(key_arg_name), status.HTTP_400_BAD_REQUEST))
+
+    stream_key = stream_url_qs[key_arg_name][0]
 
     if not key_cache.has(stream_key):
         return app.make_response(('Incorrect {}'.format(key_arg_name), status.HTTP_401_UNAUTHORIZED))
@@ -61,8 +67,8 @@ def handle_invalid_usage(error):
     response = jsonify(rv)
     response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return response
-    #return 'Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR
+    # return 'Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     app.run()
