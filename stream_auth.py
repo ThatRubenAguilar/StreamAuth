@@ -1,30 +1,30 @@
 from flask import Flask, request, jsonify
 from flask_api import status
-from werkzeug.contrib.cache import SimpleCache
 import os.path
 import urllib.parse as urlparse
+import logging
 
 app = Flask(__name__)
 
-publishkey_cache = SimpleCache()
-playkey_cache = SimpleCache()
+publishkey_cache = {}
+playkey_cache = {}
 live_key = None
 
 
 def populate_cache(cache, full_file_path):
     if not os.path.isfile(full_file_path):
-        print('Warning: No keys loaded for {}'.format(full_file_path))
+        logging.warning('No keys loaded for {}'.format(full_file_path))
         return
-    print("loading keys from '{}'".format(full_file_path))
+    logging.info("loading keys from '{}'".format(full_file_path))
     try:
         with open(full_file_path) as f:
             content = f.readlines()
 
         content = [x.strip() for x in content]
         for key in content:
-            cache.add(key, key)
+            cache[key] = key
     except Exception as e:
-        print("failed to load keys from '{}' because {}".format(full_file_path, e.args[0]))
+        logging.error("failed to load keys from '{}' because {}".format(full_file_path, e.args[0]))
 
 
 populate_cache(publishkey_cache, 'publish_keys.txt')
@@ -55,7 +55,7 @@ def check_auth(key_cache, key_arg_name):
     if stream_key is None:
         return app.make_response(('Missing {}'.format(key_arg_name), status.HTTP_400_BAD_REQUEST))
 
-    if not key_cache.has(stream_key):
+    if stream_key not in key_cache:
         return app.make_response(('Incorrect {}'.format(key_arg_name), status.HTTP_401_UNAUTHORIZED))
 
     return app.make_response(('OK', status.HTTP_200_OK))
@@ -80,9 +80,10 @@ def handle_invalid_usage(error):
     # response = jsonify(rv)
     # response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     # return response
-    print(error.message)
+    logging.error(error.message)
     return app.make_response(('Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR))
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     app.run(host='127.0.0.1', port=5001)
