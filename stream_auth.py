@@ -13,9 +13,10 @@ live_key = None
 
 def populate_cache(cache, full_file_path):
     if not os.path.isfile(full_file_path):
-        logging.warning('No keys loaded for {}'.format(full_file_path))
+        app.logger.warning('No keys loaded for {}'.format(full_file_path))
         return
-    logging.info("loading keys from '{}'".format(full_file_path))
+
+    app.logger.info("loading keys from '{}'".format(full_file_path))
     try:
         with open(full_file_path) as f:
             content = f.readlines()
@@ -24,7 +25,7 @@ def populate_cache(cache, full_file_path):
         for key in content:
             cache[key] = key
     except Exception as e:
-        logging.error("failed to load keys from '{}' because {}".format(full_file_path, e.args[0]))
+        app.logger.error("failed to load keys from '{}' because {}".format(full_file_path, e.args[0]))
 
 
 populate_cache(publishkey_cache, 'publish_keys.txt')
@@ -80,10 +81,10 @@ def handle_invalid_usage(error):
     # response = jsonify(rv)
     # response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     # return response
-    logging.error(error.message)
+    app.logger.error(error.message)
     return app.make_response(('Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR))
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    app.logger.setLevel(logging.INFO)
     app.run(host='127.0.0.1', port=5001)
