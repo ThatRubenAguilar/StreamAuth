@@ -15,13 +15,16 @@ def populate_cache(cache, full_file_path):
     if not os.path.isfile(full_file_path):
         print('Warning: No keys loaded for {}'.format(full_file_path))
         return
+    print("loading keys from '{}'".format(full_file_path))
+    try:
+        with open(full_file_path) as f:
+            content = f.readlines()
 
-    with open(full_file_path) as f:
-        content = f.readlines()
-
-    content = [x.strip() for x in content]
-    for key in content:
-        cache.add(key, key)
+        content = [x.strip() for x in content]
+        for key in content:
+            cache.add(key, key)
+    except Exception as e:
+        print("failed to load keys from '{}' because {}".format(full_file_path, e.args[0]))
 
 
 populate_cache(publishkey_cache, 'publish_keys.txt')
@@ -77,6 +80,7 @@ def handle_invalid_usage(error):
     # response = jsonify(rv)
     # response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     # return response
+    print(error.message)
     return app.make_response(('Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR))
 
 
